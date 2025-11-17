@@ -102,9 +102,9 @@ CREATE TABLE public.deals
     CONSTRAINT fk_deals_lead FOREIGN KEY (lead_uuid)
         REFERENCES public.leads(lead_uuid) ON DELETE SET NULL,
     CONSTRAINT fk_deals_owner FOREIGN KEY (owner_uuid)
+        REFERENCES public.users(user_uuid) ON DELETE SET NULL,
     CONSTRAINT fk_deals_team FOREIGN KEY (team_uuid)
         REFERENCES public.teams(team_uuid) ON DELETE SET NULL,
-        REFERENCES public.users(user_uuid) ON DELETE SET NULL,
     CONSTRAINT chk_deals_probability CHECK (probability >= 0 AND probability <= 100)
 );
 
