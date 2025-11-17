@@ -32,11 +32,11 @@ CREATE TABLE public.users
 
     -- Role & Permissions
     role_uuid UUID,
-    permissions JSONB DEFAULT '{}'::jsonb,
 
-    -- Settings
+    -- Settings (JSONB for display/rare queries)
     preferences JSONB DEFAULT '{}'::jsonb,
     notification_settings JSONB DEFAULT '{}'::jsonb,
+    permissions JSONB DEFAULT '{}'::jsonb,
 
     -- Status
     status VARCHAR(50) DEFAULT 'active',
@@ -49,7 +49,7 @@ CREATE TABLE public.users
     password_changed_at TIMESTAMP WITH TIME ZONE,
     failed_login_attempts INTEGER DEFAULT 0,
 
-    -- Custom Fields
+    -- Custom Fields (JSONB for overflow)
     custom_fields JSONB DEFAULT '{}'::jsonb,
 
     -- Metadata
@@ -84,5 +84,5 @@ CREATE INDEX idx_users_status ON public.users(status);
 
 -- Comments
 COMMENT ON TABLE public.users IS 'User accounts and profiles';
-COMMENT ON COLUMN public.users.preferences IS 'User preferences (theme, language, timezone, etc.)';
-COMMENT ON COLUMN public.users.permissions IS 'User-specific permission overrides';
+COMMENT ON COLUMN public.users.preferences IS 'User preferences (theme, language, timezone, etc.) - JSONB';
+COMMENT ON COLUMN public.users.permissions IS 'User-specific permission overrides - JSONB';

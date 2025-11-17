@@ -70,9 +70,10 @@ CREATE INDEX idx_common_master_company_type_active ON public.common_master(compa
 CREATE INDEX idx_common_master_code ON public.common_master(code);
 CREATE INDEX idx_common_master_parent ON public.common_master(parent_uuid) WHERE parent_uuid IS NOT NULL;
 CREATE INDEX idx_common_master_active ON public.common_master(is_active);
+CREATE INDEX idx_common_master_name ON public.common_master(name);
 
 -- Comments
-COMMENT ON TABLE public.common_master IS 'Universal master data table for lookups and picklists';
-COMMENT ON COLUMN public.common_master.type IS 'Category of master data (lead_source, industry, etc.)';
-COMMENT ON COLUMN public.common_master.metadata IS 'Additional attributes like color, icon, default_value, etc.';
+COMMENT ON TABLE public.common_master IS 'Universal master data table for lookups and picklists - replaces ~45 lookup tables';
+COMMENT ON COLUMN public.common_master.type IS 'Category of master data (lead_source, industry, etc.) - indexed for fast lookups';
+COMMENT ON COLUMN public.common_master.metadata IS 'Additional attributes like color, icon, default_value, etc. - JSONB';
 COMMENT ON COLUMN public.common_master.is_system IS 'System-defined values that cannot be deleted';

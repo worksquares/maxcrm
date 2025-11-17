@@ -19,8 +19,14 @@ CREATE TABLE public.companies
     phone VARCHAR(50),
     website VARCHAR(255),
 
-    -- Address
-    address JSONB DEFAULT '{}'::jsonb,
+    -- Address - Extract commonly queried fields
+    country VARCHAR(100),
+    state VARCHAR(100),
+    city VARCHAR(100),
+    postal_code VARCHAR(20),
+    address_line1 VARCHAR(255),
+    address_line2 VARCHAR(255),
+    address_full JSONB DEFAULT '{}'::jsonb,
 
     -- Subscription & Billing
     subscription_plan VARCHAR(50) DEFAULT 'free',
@@ -30,12 +36,12 @@ CREATE TABLE public.companies
     max_users INTEGER DEFAULT 5,
     max_storage_gb INTEGER DEFAULT 10,
 
-    -- Settings & Configuration
+    -- Settings & Configuration (JSONB for display/rare queries)
     settings JSONB DEFAULT '{}'::jsonb,
     features JSONB DEFAULT '{}'::jsonb,
     branding JSONB DEFAULT '{}'::jsonb,
 
-    -- Custom Fields
+    -- Custom Fields (JSONB for overflow)
     custom_fields JSONB DEFAULT '{}'::jsonb,
 
     -- Metadata
@@ -59,9 +65,12 @@ CREATE INDEX idx_companies_uuid ON public.companies(company_uuid);
 CREATE INDEX idx_companies_code ON public.companies(company_code);
 CREATE INDEX idx_companies_active ON public.companies(is_active);
 CREATE INDEX idx_companies_subscription ON public.companies(subscription_status);
+CREATE INDEX idx_companies_country ON public.companies(country);
+CREATE INDEX idx_companies_state ON public.companies(state);
 
 -- Comments
 COMMENT ON TABLE public.companies IS 'Multi-tenant company/organization master table';
-COMMENT ON COLUMN public.companies.settings IS 'Company-wide settings (timezone, currency, date format, etc.)';
-COMMENT ON COLUMN public.companies.features IS 'Enabled features for this company';
-COMMENT ON COLUMN public.companies.custom_fields IS 'Custom fields defined for company profile';
+COMMENT ON COLUMN public.companies.settings IS 'Company-wide settings (timezone, currency, date format, etc.) - JSONB';
+COMMENT ON COLUMN public.companies.features IS 'Enabled features for this company - JSONB';
+COMMENT ON COLUMN public.companies.custom_fields IS 'Custom fields defined for company profile - JSONB';
+COMMENT ON COLUMN public.companies.address_full IS 'Complete address JSON for display: {street, city, state, country, postal_code, landmark}';

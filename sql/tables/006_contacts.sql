@@ -29,10 +29,16 @@ CREATE TABLE public.contacts
     mobile VARCHAR(50),
     fax VARCHAR(50),
 
-    -- Address
-    mailing_address JSONB DEFAULT '{}'::jsonb,
+    -- Mailing Address - Extract frequently queried fields
+    mailing_country VARCHAR(100),
+    mailing_state VARCHAR(100),
+    mailing_city VARCHAR(100),
+    mailing_postal_code VARCHAR(20),
+    mailing_address_line1 VARCHAR(255),
+    mailing_address_line2 VARCHAR(255),
+    mailing_address_full JSONB DEFAULT '{}'::jsonb,
 
-    -- Social & Web
+    -- Social & Web (Display only - JSONB fine)
     linkedin_url VARCHAR(255),
     twitter_handle VARCHAR(100),
     social_links JSONB DEFAULT '{}'::jsonb,
@@ -56,7 +62,20 @@ CREATE TABLE public.contacts
     do_not_call BOOLEAN DEFAULT false,
     preferred_contact_method VARCHAR(50),
 
-    -- Custom Fields
+    -- Flex Columns for High-Query Custom Fields
+    custom_text_1 VARCHAR(255),
+    custom_text_2 VARCHAR(255),
+    custom_text_3 VARCHAR(255),
+    custom_number_1 NUMERIC(15,2),
+    custom_number_2 NUMERIC(15,2),
+    custom_date_1 DATE,
+    custom_date_2 DATE,
+    custom_boolean_1 BOOLEAN,
+    custom_boolean_2 BOOLEAN,
+    custom_lookup_1_uuid UUID,
+    custom_lookup_2_uuid UUID,
+
+    -- Custom Fields (JSONB for overflow)
     custom_fields JSONB DEFAULT '{}'::jsonb,
 
     -- Metadata
@@ -97,8 +116,13 @@ CREATE INDEX idx_contacts_account ON public.contacts(account_uuid);
 CREATE INDEX idx_contacts_owner ON public.contacts(owner_uuid);
 CREATE INDEX idx_contacts_company_active ON public.contacts(company_id, is_active);
 CREATE INDEX idx_contacts_status ON public.contacts(status);
+CREATE INDEX idx_contacts_lead_score ON public.contacts(lead_score DESC);
+CREATE INDEX idx_contacts_mailing_country ON public.contacts(mailing_country);
+CREATE INDEX idx_contacts_mailing_state ON public.contacts(mailing_state);
+CREATE INDEX idx_contacts_custom_number_1 ON public.contacts(custom_number_1) WHERE custom_number_1 IS NOT NULL;
+CREATE INDEX idx_contacts_custom_date_1 ON public.contacts(custom_date_1) WHERE custom_date_1 IS NOT NULL;
 
 -- Comments
 COMMENT ON TABLE public.contacts IS 'Individual contact persons associated with accounts';
-COMMENT ON COLUMN public.contacts.custom_fields IS 'Custom field values for dynamic fields';
-COMMENT ON COLUMN public.contacts.mailing_address IS 'JSON: {street, city, state, country, postal_code}';
+COMMENT ON COLUMN public.contacts.custom_fields IS 'Overflow custom fields (JSONB)';
+COMMENT ON COLUMN public.contacts.mailing_address_full IS 'Complete mailing address JSON for display';

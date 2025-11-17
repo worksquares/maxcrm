@@ -22,7 +22,7 @@ CREATE TABLE public.pipeline_stages
     is_closed_lost BOOLEAN DEFAULT false,
     is_final BOOLEAN DEFAULT false,
 
-    -- Stage Behavior
+    -- Stage Behavior (JSONB for config)
     required_fields JSONB DEFAULT '[]'::jsonb,
     automation_rules JSONB DEFAULT '{}'::jsonb,
 
@@ -53,13 +53,11 @@ CREATE TABLE public.pipeline_stages
     CONSTRAINT chk_stages_probability CHECK (probability >= 0 AND probability <= 100)
 );
 
--- Indexes
 CREATE INDEX idx_stages_uuid ON public.pipeline_stages(stage_uuid);
 CREATE INDEX idx_stages_company_id ON public.pipeline_stages(company_id);
 CREATE INDEX idx_stages_pipeline ON public.pipeline_stages(pipeline_uuid);
 CREATE INDEX idx_stages_pipeline_order ON public.pipeline_stages(pipeline_uuid, sort_order);
 
--- Comments
 COMMENT ON TABLE public.pipeline_stages IS 'Stages within sales pipelines';
-COMMENT ON COLUMN public.pipeline_stages.required_fields IS 'Fields required before moving to this stage';
-COMMENT ON COLUMN public.pipeline_stages.automation_rules IS 'Automation triggers for this stage';
+COMMENT ON COLUMN public.pipeline_stages.required_fields IS 'Fields required before moving to this stage - JSONB';
+COMMENT ON COLUMN public.pipeline_stages.automation_rules IS 'Automation triggers for this stage - JSONB';

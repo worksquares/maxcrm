@@ -13,9 +13,11 @@ CREATE TABLE public.roles
     role_code VARCHAR(50),
     description TEXT,
 
-    -- Permissions Configuration
+    -- Permissions Configuration (JSONB - not frequently queried in WHERE)
     permissions JSONB DEFAULT '{}'::jsonb,
     module_access JSONB DEFAULT '{}'::jsonb,
+
+    -- Data Access Level (Column for frequent filtering)
     data_access_level VARCHAR(50) DEFAULT 'own',
 
     -- Hierarchy
@@ -26,7 +28,7 @@ CREATE TABLE public.roles
     is_active BOOLEAN DEFAULT true,
     is_system BOOLEAN DEFAULT false,
 
-    -- Custom Fields
+    -- Custom Fields (JSONB for overflow)
     custom_fields JSONB DEFAULT '{}'::jsonb,
 
     -- Multi-tenant
@@ -52,9 +54,10 @@ CREATE INDEX idx_roles_uuid ON public.roles(role_uuid);
 CREATE INDEX idx_roles_company_id ON public.roles(company_id);
 CREATE INDEX idx_roles_company_active ON public.roles(company_id, is_active);
 CREATE INDEX idx_roles_parent ON public.roles(parent_role_uuid) WHERE parent_role_uuid IS NOT NULL;
+CREATE INDEX idx_roles_data_access ON public.roles(data_access_level);
 
 -- Comments
 COMMENT ON TABLE public.roles IS 'User roles with permission configuration';
-COMMENT ON COLUMN public.roles.permissions IS 'Permission matrix: {module: {create, read, update, delete, export}}';
-COMMENT ON COLUMN public.roles.module_access IS 'Module-level access controls';
-COMMENT ON COLUMN public.roles.data_access_level IS 'Data visibility scope for this role';
+COMMENT ON COLUMN public.roles.permissions IS 'Permission matrix: {module: {create, read, update, delete, export}} - JSONB';
+COMMENT ON COLUMN public.roles.module_access IS 'Module-level access controls - JSONB';
+COMMENT ON COLUMN public.roles.data_access_level IS 'Data visibility scope for this role (indexed column)';

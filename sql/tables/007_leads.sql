@@ -1,5 +1,5 @@
 -- Table: public.leads
--- Potential customer leads
+-- Sales leads before conversion
 
 DROP TABLE IF EXISTS public.leads CASCADE;
 
@@ -27,10 +27,16 @@ CREATE TABLE public.leads
     mobile VARCHAR(50),
     website VARCHAR(255),
 
-    -- Address
-    address JSONB DEFAULT '{}'::jsonb,
+    -- Address - Extract frequently queried fields
+    country VARCHAR(100),
+    state VARCHAR(100),
+    city VARCHAR(100),
+    postal_code VARCHAR(20),
+    address_line1 VARCHAR(255),
+    address_line2 VARCHAR(255),
+    address_full JSONB DEFAULT '{}'::jsonb,
 
-    -- Lead Classification
+    -- Lead Classification (UUID references for efficient JOINs)
     lead_source_uuid UUID,
     lead_status_uuid UUID,
     lead_rating_uuid UUID,
@@ -47,18 +53,32 @@ CREATE TABLE public.leads
     converted_contact_uuid UUID,
     converted_deal_uuid UUID,
 
-    -- Lead Qualification
+    -- Lead Qualification (Frequently filtered)
     budget NUMERIC(15,2),
     timeline VARCHAR(100),
     pain_points TEXT,
     qualification_notes TEXT,
+    is_qualified BOOLEAN DEFAULT false,
 
     -- Communication Preferences
     email_opt_out BOOLEAN DEFAULT false,
     sms_opt_out BOOLEAN DEFAULT false,
     do_not_call BOOLEAN DEFAULT false,
 
-    -- Custom Fields
+    -- Flex Columns for High-Query Custom Fields
+    custom_text_1 VARCHAR(255),
+    custom_text_2 VARCHAR(255),
+    custom_text_3 VARCHAR(255),
+    custom_number_1 NUMERIC(15,2),
+    custom_number_2 NUMERIC(15,2),
+    custom_date_1 DATE,
+    custom_date_2 DATE,
+    custom_boolean_1 BOOLEAN,
+    custom_boolean_2 BOOLEAN,
+    custom_lookup_1_uuid UUID,
+    custom_lookup_2_uuid UUID,
+
+    -- Custom Fields (JSONB for overflow)
     custom_fields JSONB DEFAULT '{}'::jsonb,
 
     -- Metadata
@@ -68,7 +88,6 @@ CREATE TABLE public.leads
 
     -- Status
     is_active BOOLEAN DEFAULT true,
-    is_qualified BOOLEAN DEFAULT false,
 
     -- Multi-tenant
     company_id INTEGER NOT NULL,
@@ -101,9 +120,15 @@ CREATE INDEX idx_leads_status ON public.leads(lead_status_uuid);
 CREATE INDEX idx_leads_source ON public.leads(lead_source_uuid);
 CREATE INDEX idx_leads_converted ON public.leads(is_converted);
 CREATE INDEX idx_leads_score ON public.leads(lead_score DESC);
+CREATE INDEX idx_leads_country ON public.leads(country);
+CREATE INDEX idx_leads_state ON public.leads(state);
+CREATE INDEX idx_leads_annual_revenue ON public.leads(annual_revenue) WHERE annual_revenue IS NOT NULL;
+CREATE INDEX idx_leads_budget ON public.leads(budget) WHERE budget IS NOT NULL;
+CREATE INDEX idx_leads_custom_number_1 ON public.leads(custom_number_1) WHERE custom_number_1 IS NOT NULL;
+CREATE INDEX idx_leads_custom_date_1 ON public.leads(custom_date_1) WHERE custom_date_1 IS NOT NULL;
 
 -- Comments
-COMMENT ON TABLE public.leads IS 'Potential customer leads before conversion';
-COMMENT ON COLUMN public.leads.custom_fields IS 'Custom field values for dynamic fields';
-COMMENT ON COLUMN public.leads.utm_params IS 'UTM tracking parameters from lead source';
-COMMENT ON COLUMN public.leads.lead_score IS 'Automated lead scoring value';
+COMMENT ON TABLE public.leads IS 'Sales leads before conversion to accounts/contacts/deals';
+COMMENT ON COLUMN public.leads.lead_score IS 'Calculated lead score based on engagement and fit';
+COMMENT ON COLUMN public.leads.utm_params IS 'UTM tracking parameters - JSONB: {source, medium, campaign, term, content}';
+COMMENT ON COLUMN public.leads.custom_fields IS 'Overflow custom fields (JSONB)';

@@ -13,12 +13,12 @@ CREATE TABLE public.deals
     deal_number VARCHAR(50),
     description TEXT,
 
-    -- Associated Entities
+    -- Associated Entities (UUIDs for efficient JOINs)
     account_uuid UUID,
     contact_uuid UUID,
     lead_uuid UUID,
 
-    -- Deal Value
+    -- Deal Value (Frequently filtered - keep as columns)
     amount NUMERIC(15,2),
     currency_code VARCHAR(3) DEFAULT 'USD',
     expected_revenue NUMERIC(15,2),
@@ -26,29 +26,29 @@ CREATE TABLE public.deals
     tax_amount NUMERIC(15,2) DEFAULT 0,
     total_amount NUMERIC(15,2),
 
-    -- Sales Process
+    -- Sales Process (Frequently filtered/joined)
     pipeline_uuid UUID,
     stage_uuid UUID,
     probability INTEGER DEFAULT 0,
     deal_type_uuid UUID,
 
-    -- Timeline
+    -- Timeline (Frequently filtered/sorted)
     close_date DATE,
     expected_close_date DATE,
     actual_close_date DATE,
     age_days INTEGER DEFAULT 0,
 
-    -- Ownership
+    -- Ownership (Frequently filtered)
     owner_uuid UUID,
     team_uuid UUID,
 
-    -- Competition & Classification
-    competitors JSONB DEFAULT '[]'::jsonb,
+    -- Deal Source
     deal_source_uuid UUID,
 
-    -- Outcome
+    -- Outcome (Frequently filtered)
     is_won BOOLEAN DEFAULT false,
     is_lost BOOLEAN DEFAULT false,
+    is_closed BOOLEAN DEFAULT false,
     lost_reason_uuid UUID,
     won_reason_uuid UUID,
     outcome_notes TEXT,
@@ -57,7 +57,23 @@ CREATE TABLE public.deals
     next_step TEXT,
     next_step_date DATE,
 
-    -- Custom Fields
+    -- Competition (Display only - JSONB fine)
+    competitors JSONB DEFAULT '[]'::jsonb,
+
+    -- Flex Columns for High-Query Custom Fields
+    custom_text_1 VARCHAR(255),
+    custom_text_2 VARCHAR(255),
+    custom_text_3 VARCHAR(255),
+    custom_number_1 NUMERIC(15,2),
+    custom_number_2 NUMERIC(15,2),
+    custom_date_1 DATE,
+    custom_date_2 DATE,
+    custom_boolean_1 BOOLEAN,
+    custom_boolean_2 BOOLEAN,
+    custom_lookup_1_uuid UUID,
+    custom_lookup_2_uuid UUID,
+
+    -- Custom Fields (JSONB for overflow)
     custom_fields JSONB DEFAULT '{}'::jsonb,
 
     -- Metadata
@@ -66,7 +82,6 @@ CREATE TABLE public.deals
 
     -- Status
     is_active BOOLEAN DEFAULT true,
-    is_closed BOOLEAN DEFAULT false,
 
     -- Multi-tenant
     company_id INTEGER NOT NULL,
@@ -101,12 +116,19 @@ CREATE INDEX idx_deals_company_active ON public.deals(company_id, is_active);
 CREATE INDEX idx_deals_stage ON public.deals(stage_uuid);
 CREATE INDEX idx_deals_pipeline ON public.deals(pipeline_uuid);
 CREATE INDEX idx_deals_close_date ON public.deals(close_date);
+CREATE INDEX idx_deals_expected_close_date ON public.deals(expected_close_date);
 CREATE INDEX idx_deals_won ON public.deals(is_won);
 CREATE INDEX idx_deals_lost ON public.deals(is_lost);
-CREATE INDEX idx_deals_amount ON public.deals(amount DESC);
+CREATE INDEX idx_deals_closed ON public.deals(is_closed);
+CREATE INDEX idx_deals_amount ON public.deals(amount DESC NULLS LAST);
+CREATE INDEX idx_deals_total_amount ON public.deals(total_amount DESC NULLS LAST);
+CREATE INDEX idx_deals_pipeline_stage ON public.deals(pipeline_uuid, stage_uuid);
+CREATE INDEX idx_deals_owner_active ON public.deals(owner_uuid, is_active) WHERE is_active = true;
+CREATE INDEX idx_deals_custom_number_1 ON public.deals(custom_number_1) WHERE custom_number_1 IS NOT NULL;
+CREATE INDEX idx_deals_custom_date_1 ON public.deals(custom_date_1) WHERE custom_date_1 IS NOT NULL;
 
 -- Comments
 COMMENT ON TABLE public.deals IS 'Sales opportunities and deals';
-COMMENT ON COLUMN public.deals.custom_fields IS 'Custom field values for dynamic fields';
-COMMENT ON COLUMN public.deals.age_days IS 'Days since deal was created';
-COMMENT ON COLUMN public.deals.competitors IS 'Array of competitor information';
+COMMENT ON COLUMN public.deals.custom_fields IS 'Overflow custom fields (JSONB)';
+COMMENT ON COLUMN public.deals.amount IS 'Primary deal amount - frequently filtered';
+COMMENT ON COLUMN public.deals.stage_uuid IS 'Current deal stage - frequently joined to pipeline_stages';

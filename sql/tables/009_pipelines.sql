@@ -17,7 +17,7 @@ CREATE TABLE public.pipelines
     is_default BOOLEAN DEFAULT false,
     pipeline_type VARCHAR(50) DEFAULT 'sales',
 
-    -- Settings
+    -- Settings (JSONB for config data)
     settings JSONB DEFAULT '{}'::jsonb,
 
     -- Sort Order
@@ -42,11 +42,9 @@ CREATE TABLE public.pipelines
     CONSTRAINT chk_pipelines_type CHECK (pipeline_type IN ('sales', 'service', 'custom'))
 );
 
--- Indexes
 CREATE INDEX idx_pipelines_uuid ON public.pipelines(pipeline_uuid);
 CREATE INDEX idx_pipelines_company_id ON public.pipelines(company_id);
 CREATE INDEX idx_pipelines_company_active ON public.pipelines(company_id, is_active);
 
--- Comments
 COMMENT ON TABLE public.pipelines IS 'Sales pipeline configurations';
-COMMENT ON COLUMN public.pipelines.settings IS 'Pipeline settings (automation rules, notifications, etc.)';
+COMMENT ON COLUMN public.pipelines.settings IS 'Pipeline settings (automation rules, notifications, etc.) - JSONB';
