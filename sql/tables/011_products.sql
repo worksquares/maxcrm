@@ -33,6 +33,7 @@ CREATE TABLE public.products
     created_by UUID,
     updated_by UUID,
     CONSTRAINT fk_products_company FOREIGN KEY (company_id) REFERENCES public.companies(company_id) ON DELETE RESTRICT,
+    CONSTRAINT fk_products_category FOREIGN KEY (product_category_uuid) REFERENCES public.product_categories(product_category_uuid) ON DELETE SET NULL,
     CONSTRAINT uk_products_company_code UNIQUE (company_id, product_code),
     CONSTRAINT chk_products_type CHECK (product_type IN ('standard', 'service', 'subscription', 'bundle'))
 );
