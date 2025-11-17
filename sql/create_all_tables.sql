@@ -1,22 +1,21 @@
 -- =====================================================
 -- MAXCRM Database Creation Script
--- PostgreSQL Complete CRM Schema - IMPROVED VERSION
+-- PostgreSQL Complete CRM Schema - COMPLETE VERSION
 -- =====================================================
 --
--- This script creates all tables for the MAXCRM system
--- Execute tables in order to maintain foreign key dependencies
+-- REALISTIC VERSION with all necessary tables
 --
--- IMPROVEMENTS IN THIS VERSION:
+-- IMPROVEMENTS:
 -- ✓ Flex columns for high-query custom fields
 -- ✓ Extract commonly queried address fields as columns
 -- ✓ Keep JSONB for display-only/rare-query data
 -- ✓ Better performance for common WHERE/JOIN queries
--- ✓ Still uses common_master for lookups (UUID references)
 -- ✓ All tables have _id and _uuid columns
+-- ✓ Added missing critical tables (teams, currencies, etc.)
 --
--- TABLE REDUCTION: ~73 tables eliminated (68% reduction)
+-- TABLE COUNT: 41 tables
 -- Traditional CRM: ~108 tables
--- MAXCRM: 35 tables (34 + common_master replaces ~45 lookup tables)
+-- MAXCRM: 41 tables (62% reduction)
 --
 -- =====================================================
 
@@ -30,11 +29,11 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 \echo 'Creating companies table...'
 \i tables/001_companies.sql
 
-\echo 'Creating common_master table (replaces ~45 lookup tables)...'
+\echo 'Creating common_master table (replaces ~38 lookup tables)...'
 \i tables/002_common_master.sql
 
 -- =====================================================
--- SECTION 2: USER MANAGEMENT (2 tables)
+-- SECTION 2: USER MANAGEMENT (3 tables)
 -- =====================================================
 
 \echo 'Creating users table...'
@@ -43,8 +42,28 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 \echo 'Creating roles table...'
 \i tables/004_roles.sql
 
+\echo 'Creating teams table...'
+\i tables/035_teams.sql
+
 -- =====================================================
--- SECTION 3: CRM CORE ENTITIES (3 tables)
+-- SECTION 3: REFERENCE DATA (4 tables)
+-- Standard global reference tables
+-- =====================================================
+
+\echo 'Creating currencies table...'
+\i tables/036_currencies.sql
+
+\echo 'Creating countries table...'
+\i tables/037_countries.sql
+
+\echo 'Creating states table...'
+\i tables/038_states.sql
+
+\echo 'Creating timezones table...'
+\i tables/039_timezones.sql
+
+-- =====================================================
+-- SECTION 4: CRM CORE ENTITIES (3 tables)
 -- With flex columns and extracted address fields
 -- =====================================================
 
@@ -58,11 +77,22 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 \i tables/007_leads.sql
 
 -- =====================================================
--- SECTION 4: DEALS & PIPELINE (3 tables)
+-- SECTION 5: TEAM ASSIGNMENTS (2 tables)
+-- Junction tables for team-based access
+-- =====================================================
+
+\echo 'Creating account_team_members table...'
+\i tables/040_account_team_members.sql
+
+-- =====================================================
+-- SECTION 6: DEALS & PIPELINE (3 tables)
 -- =====================================================
 
 \echo 'Creating deals table (with flex columns)...'
 \i tables/008_deals.sql
+
+\echo 'Creating deal_team_members table...'
+\i tables/041_deal_team_members.sql
 
 \echo 'Creating pipelines table...'
 \i tables/009_pipelines.sql
@@ -71,7 +101,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 \i tables/010_pipeline_stages.sql
 
 -- =====================================================
--- SECTION 5: PRODUCTS & PRICING (3 tables)
+-- SECTION 7: PRODUCTS & PRICING (3 tables)
 -- =====================================================
 
 \echo 'Creating products table...'
@@ -84,7 +114,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 \i tables/013_price_book_entries.sql
 
 -- =====================================================
--- SECTION 6: QUOTES (2 tables)
+-- SECTION 8: QUOTES (2 tables)
 -- =====================================================
 
 \echo 'Creating quotes table...'
@@ -94,8 +124,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 \i tables/015_quote_line_items.sql
 
 -- =====================================================
--- SECTION 7: DYNAMIC FORMS & FIELDS (3 tables)
--- Custom modules with JSONB storage
+-- SECTION 9: DYNAMIC FORMS & FIELDS (3 tables)
 -- =====================================================
 
 \echo 'Creating custom_modules table...'
@@ -108,7 +137,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 \i tables/018_custom_records.sql
 
 -- =====================================================
--- SECTION 8: WORKFLOW ENGINE (2 tables)
+-- SECTION 10: WORKFLOW ENGINE (2 tables)
 -- =====================================================
 
 \echo 'Creating workflows table...'
@@ -118,7 +147,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 \i tables/020_workflow_executions.sql
 
 -- =====================================================
--- SECTION 9: APPROVAL SYSTEM (3 tables)
+-- SECTION 11: APPROVAL SYSTEM (3 tables)
 -- =====================================================
 
 \echo 'Creating approval_processes table...'
@@ -131,7 +160,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 \i tables/023_approval_steps.sql
 
 -- =====================================================
--- SECTION 10: ACTIVITIES & COMMUNICATIONS (3 tables)
+-- SECTION 12: ACTIVITIES & COMMUNICATIONS (3 tables)
 -- =====================================================
 
 \echo 'Creating activities table (unified)...'
@@ -144,7 +173,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 \i tables/026_attachments.sql
 
 -- =====================================================
--- SECTION 11: MARKETING (3 tables)
+-- SECTION 13: MARKETING (3 tables)
 -- =====================================================
 
 \echo 'Creating campaigns table...'
@@ -157,14 +186,14 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 \i tables/029_email_templates.sql
 
 -- =====================================================
--- SECTION 12: CUSTOMER SUPPORT (1 table)
+-- SECTION 14: CUSTOMER SUPPORT (1 table)
 -- =====================================================
 
 \echo 'Creating cases table...'
 \i tables/030_cases.sql
 
 -- =====================================================
--- SECTION 13: SUPPORTING TABLES (4 tables)
+-- SECTION 15: SUPPORTING TABLES (4 tables)
 -- =====================================================
 
 \echo 'Creating tags table...'
@@ -188,28 +217,39 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 \echo 'MAXCRM Database Schema Created Successfully!'
 \echo '====================================================='
 \echo ''
-\echo 'Tables Created: 34'
+\echo 'Tables Created: 41'
 \echo ''
-\echo 'IMPROVEMENTS:'
+\echo 'TABLE BREAKDOWN:'
+\echo '  • Core & Company: 2'
+\echo '  • User Management: 3 (users, roles, teams)'
+\echo '  • Reference Data: 4 (currencies, countries, states, timezones)'
+\echo '  • CRM Entities: 3 (accounts, contacts, leads)'
+\echo '  • Team Assignments: 2 (account/deal team members)'
+\echo '  • Deals & Pipeline: 3'
+\echo '  • Products & Pricing: 3'
+\echo '  • Quotes: 2'
+\echo '  • Dynamic Forms: 3'
+\echo '  • Workflows: 2'
+\echo '  • Approvals: 3'
+\echo '  • Activities: 3'
+\echo '  • Marketing: 3'
+\echo '  • Support: 1'
+\echo '  • Supporting: 4'
+\echo ''
+\echo 'KEY IMPROVEMENTS:'
 \echo '  ✓ Flex columns for frequently queried custom fields'
 \echo '  ✓ Extracted address fields (country, state, city)'
-\echo '  ✓ common_master UUIDs used in JOINs (indexed)'
+\echo '  ✓ Teams table (was missing!)'
+\echo '  ✓ Currencies with exchange rates'
+\echo '  ✓ Standard reference data (countries, states, timezones)'
+\echo '  ✓ Team assignment junction tables'
+\echo '  ✓ common_master for company-specific lookups'
 \echo '  ✓ JSONB for display-only/config data'
-\echo '  ✓ Better query performance'
 \echo ''
-\echo 'KEY FEATURES:'
-\echo '  ✓ Multi-tenant architecture'
-\echo '  ✓ All tables have _id and _uuid'
-\echo '  ✓ Dynamic forms via custom_modules'
-\echo '  ✓ Workflow automation engine'
-\echo '  ✓ Multi-level approval system'
-\echo '  ✓ Comprehensive indexing'
-\echo '  ✓ Full audit trail'
-\echo ''
-\echo 'EFFICIENCY:'
-\echo '  ✓ ~73 tables eliminated (68% reduction)'
+\echo 'EFFICIENCY (REALISTIC):'
+\echo '  ✓ ~67 tables eliminated (62% reduction)'
 \echo '  ✓ Traditional CRM: ~108 tables'
-\echo '  ✓ MAXCRM: 35 tables'
+\echo '  ✓ MAXCRM: 41 tables'
 \echo ''
 \echo 'FLEX COLUMNS (on core entities):'
 \echo '  • custom_text_1, custom_text_2, custom_text_3'
@@ -219,9 +259,10 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 \echo '  • custom_lookup_1_uuid, custom_lookup_2_uuid'
 \echo ''
 \echo 'Next Steps:'
-\echo '  1. Populate common_master with lookup values'
-\echo '  2. Configure workflows and approvals'
-\echo '  3. Create custom modules as needed'
-\echo '  4. Map important custom fields to flex columns'
+\echo '  1. Populate currencies, countries, states, timezones'
+\echo '  2. Populate common_master with lookup values'
+\echo '  3. Create teams and assign users'
+\echo '  4. Configure workflows and approvals'
+\echo '  5. Map important custom fields to flex columns'
 \echo ''
 \echo '====================================================='

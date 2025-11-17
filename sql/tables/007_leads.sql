@@ -102,6 +102,8 @@ CREATE TABLE public.leads
     CONSTRAINT fk_leads_company FOREIGN KEY (company_id)
         REFERENCES public.companies(company_id) ON DELETE RESTRICT,
     CONSTRAINT fk_leads_owner FOREIGN KEY (owner_uuid)
+    CONSTRAINT fk_leads_team FOREIGN KEY (team_uuid)
+        REFERENCES public.teams(team_uuid) ON DELETE SET NULL,
         REFERENCES public.users(user_uuid) ON DELETE SET NULL,
     CONSTRAINT fk_leads_converted_account FOREIGN KEY (converted_account_uuid)
         REFERENCES public.accounts(account_uuid) ON DELETE SET NULL,

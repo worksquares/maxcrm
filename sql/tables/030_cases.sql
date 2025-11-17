@@ -19,6 +19,8 @@ CREATE TABLE public.cases (
     CONSTRAINT fk_cases_company FOREIGN KEY (company_id) REFERENCES public.companies(company_id) ON DELETE RESTRICT,
     CONSTRAINT fk_cases_account FOREIGN KEY (account_uuid) REFERENCES public.accounts(account_uuid) ON DELETE CASCADE,
     CONSTRAINT fk_cases_contact FOREIGN KEY (contact_uuid) REFERENCES public.contacts(contact_uuid) ON DELETE SET NULL,
+    CONSTRAINT fk_cases_team FOREIGN KEY (team_uuid)
+        REFERENCES public.teams(team_uuid) ON DELETE SET NULL,
     CONSTRAINT uk_cases_company_number UNIQUE (company_id, case_number)
 );
 CREATE INDEX idx_cases_uuid ON public.cases(case_uuid);

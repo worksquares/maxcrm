@@ -98,6 +98,8 @@ CREATE TABLE public.accounts
     CONSTRAINT fk_accounts_company FOREIGN KEY (company_id)
         REFERENCES public.companies(company_id) ON DELETE RESTRICT,
     CONSTRAINT fk_accounts_owner FOREIGN KEY (owner_uuid)
+    CONSTRAINT fk_accounts_team FOREIGN KEY (team_uuid)
+        REFERENCES public.teams(team_uuid) ON DELETE SET NULL,
         REFERENCES public.users(user_uuid) ON DELETE SET NULL,
     CONSTRAINT fk_accounts_parent FOREIGN KEY (parent_account_uuid)
         REFERENCES public.accounts(account_uuid) ON DELETE SET NULL,

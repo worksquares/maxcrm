@@ -101,6 +101,8 @@ CREATE TABLE public.contacts
     CONSTRAINT fk_contacts_account FOREIGN KEY (account_uuid)
         REFERENCES public.accounts(account_uuid) ON DELETE CASCADE,
     CONSTRAINT fk_contacts_owner FOREIGN KEY (owner_uuid)
+    CONSTRAINT fk_contacts_team FOREIGN KEY (team_uuid)
+        REFERENCES public.teams(team_uuid) ON DELETE SET NULL,
         REFERENCES public.users(user_uuid) ON DELETE SET NULL,
     CONSTRAINT fk_contacts_reports_to FOREIGN KEY (reports_to_uuid)
         REFERENCES public.contacts(contact_uuid) ON DELETE SET NULL,
