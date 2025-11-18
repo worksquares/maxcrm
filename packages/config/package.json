@@ -1,0 +1,10 @@
+{
+  "name": "@maxcrm/config",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared configuration files for MAXCRM",
+  "files": [
+    "eslint",
+    "typescript"
+  ]
+}
