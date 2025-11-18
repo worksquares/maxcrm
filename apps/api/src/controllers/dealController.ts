@@ -25,83 +25,120 @@ const updateDealSchema = z.object({
 export class DealController {
   async getAllDeals(req: Request, res: Response) {
     try {
+      const userId = req.user!.id
       const page = parseInt(req.query.page as string) || 1
       const limit = parseInt(req.query.limit as string) || 20
 
-      const result = await dealService.getAllDeals(page, limit)
+      const result = await dealService.getAllDeals(userId, page, limit)
       res.json(result)
-    } catch (error) {
-      res.status(500).json({
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }
 
   async getDealById(req: Request, res: Response) {
     try {
+      const userId = req.user!.id
       const { id } = req.params
-      const result = await dealService.getDealById(id)
+      const result = await dealService.getDealById(id, userId)
 
       if (!result.success) {
         return res.status(404).json(result)
       }
 
       res.json(result)
-    } catch (error) {
-      res.status(500).json({
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }
 
   async getDealsByStage(req: Request, res: Response) {
     try {
+      const userId = req.user!.id
       const { stage } = req.params as { stage: DealStage }
-      const result = await dealService.getDealsByStage(stage)
+      const result = await dealService.getDealsByStage(stage, userId)
       res.json(result)
-    } catch (error) {
-      res.status(500).json({
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }
 
   async getDealsByContact(req: Request, res: Response) {
     try {
+      const userId = req.user!.id
       const { contactId } = req.params
-      const result = await dealService.getDealsByContact(contactId)
+      const result = await dealService.getDealsByContact(contactId, userId)
       res.json(result)
-    } catch (error) {
-      res.status(500).json({
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }
 
   async getDealsByCompany(req: Request, res: Response) {
     try {
+      const userId = req.user!.id
       const { companyId } = req.params
-      const result = await dealService.getDealsByCompany(companyId)
+      const result = await dealService.getDealsByCompany(companyId, userId)
       res.json(result)
-    } catch (error) {
-      res.status(500).json({
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }
 
   async createDeal(req: Request, res: Response) {
     try {
+      const userId = req.user!.id
       const validatedData = createDealSchema.parse(req.body)
 
       // Convert string date to Date object if provided
       const dealData = {
         ...validatedData,
+        userId,
         expectedCloseDate: validatedData.expectedCloseDate
           ? new Date(validatedData.expectedCloseDate)
           : undefined,
@@ -114,7 +151,7 @@ export class DealController {
       }
 
       res.status(201).json(result)
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           success: false,
@@ -123,15 +160,23 @@ export class DealController {
         })
       }
 
-      res.status(500).json({
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }
 
   async updateDeal(req: Request, res: Response) {
     try {
+      const userId = req.user!.id
       const { id } = req.params
       const validatedData = updateDealSchema.parse(req.body)
 
@@ -143,14 +188,14 @@ export class DealController {
           : undefined,
       }
 
-      const result = await dealService.updateDeal(id, dealData)
+      const result = await dealService.updateDeal(id, userId, dealData)
 
       if (!result.success) {
         return res.status(404).json(result)
       }
 
       res.json(result)
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           success: false,
@@ -159,39 +204,60 @@ export class DealController {
         })
       }
 
-      res.status(500).json({
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }
 
   async deleteDeal(req: Request, res: Response) {
     try {
+      const userId = req.user!.id
       const { id } = req.params
-      const result = await dealService.deleteDeal(id)
+      const result = await dealService.deleteDeal(id, userId)
 
       if (!result.success) {
         return res.status(404).json(result)
       }
 
       res.json(result)
-    } catch (error) {
-      res.status(500).json({
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }
 
-  async getDealStats(_req: Request, res: Response) {
+  async getDealStats(req: Request, res: Response) {
     try {
-      const result = await dealService.getDealStats()
+      const userId = req.user!.id
+      const result = await dealService.getDealStats(userId)
       res.json(result)
-    } catch (error) {
-      res.status(500).json({
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }

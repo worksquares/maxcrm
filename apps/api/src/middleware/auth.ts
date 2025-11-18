@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import { User } from '@maxcrm/shared'
+import { UserModel } from '../models/User'
 
 // Extend Express Request type to include user
 declare global {
@@ -11,7 +12,11 @@ declare global {
   }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+const JWT_SECRET = process.env.JWT_SECRET
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable must be set')
+}
 
 export interface JWTPayload {
   userId: string
@@ -19,7 +24,7 @@ export interface JWTPayload {
   role: string
 }
 
-export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
+export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization']
   const token = authHeader && authHeader.split(' ')[1] // Bearer TOKEN
 
@@ -33,23 +38,28 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   try {
     const payload = jwt.verify(token, JWT_SECRET) as JWTPayload
 
-    // In a real application, you would fetch the full user from the database
-    // For now, we'll attach the payload to the request
-    req.user = {
-      id: payload.userId,
-      email: payload.email,
-      role: payload.role as any,
-      firstName: '',
-      lastName: '',
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    // Fetch the full user from the database
+    const user = await UserModel.findById(payload.userId)
+
+    if (!user) {
+      return res.status(403).json({
+        success: false,
+        error: 'User not found',
+      })
     }
 
+    req.user = user
     next()
   } catch (error) {
-    return res.status(403).json({
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(403).json({
+        success: false,
+        error: 'Invalid or expired token',
+      })
+    }
+    return res.status(500).json({
       success: false,
-      error: 'Invalid or expired token',
+      error: 'Authentication failed',
     })
   }
 }
@@ -61,7 +71,7 @@ export const generateToken = (user: User): string => {
     role: user.role,
   }
 
-  const expiresIn = process.env.JWT_EXPIRES_IN || '7d'
+  const expiresIn: string = process.env.JWT_EXPIRES_IN || '7d'
 
-  return jwt.sign(payload, JWT_SECRET, { expiresIn } as any)
+  return jwt.sign(payload, JWT_SECRET, { expiresIn } as jwt.SignOptions)
 }

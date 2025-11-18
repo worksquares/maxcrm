@@ -7,6 +7,7 @@ export interface Contact {
   email: string
   phone?: string
   companyId?: string
+  userId: string
   createdAt: Date
   updatedAt: Date
 }
@@ -17,6 +18,7 @@ export interface Company {
   website?: string
   industry?: string
   size?: string
+  userId: string
   createdAt: Date
   updatedAt: Date
 }
@@ -28,6 +30,7 @@ export interface Deal {
   stage: DealStage
   contactId?: string
   companyId?: string
+  userId: string
   expectedCloseDate?: Date
   createdAt: Date
   updatedAt: Date

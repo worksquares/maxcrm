@@ -2,8 +2,8 @@ import { Deal, DealStage, ApiResponse, PaginatedResponse, DEFAULT_PAGE_SIZE } fr
 import { DealModel } from '../models/Deal'
 
 export class DealService {
-  async getAllDeals(page = 1, limit = DEFAULT_PAGE_SIZE): Promise<PaginatedResponse<Deal>> {
-    const allDeals = await DealModel.findAll()
+  async getAllDeals(userId: string, page = 1, limit = DEFAULT_PAGE_SIZE): Promise<PaginatedResponse<Deal>> {
+    const allDeals = await DealModel.findAll(userId)
     const total = allDeals.length
     const totalPages = Math.ceil(total / limit)
     const startIndex = (page - 1) * limit
@@ -22,8 +22,8 @@ export class DealService {
     }
   }
 
-  async getDealById(id: string): Promise<ApiResponse<Deal>> {
-    const deal = await DealModel.findById(id)
+  async getDealById(id: string, userId: string): Promise<ApiResponse<Deal>> {
+    const deal = await DealModel.findById(id, userId)
 
     if (!deal) {
       return {
@@ -38,8 +38,8 @@ export class DealService {
     }
   }
 
-  async getDealsByStage(stage: DealStage): Promise<ApiResponse<Deal[]>> {
-    const deals = await DealModel.findByStage(stage)
+  async getDealsByStage(stage: DealStage, userId: string): Promise<ApiResponse<Deal[]>> {
+    const deals = await DealModel.findByStage(stage, userId)
 
     return {
       success: true,
@@ -47,8 +47,8 @@ export class DealService {
     }
   }
 
-  async getDealsByContact(contactId: string): Promise<ApiResponse<Deal[]>> {
-    const deals = await DealModel.findByContactId(contactId)
+  async getDealsByContact(contactId: string, userId: string): Promise<ApiResponse<Deal[]>> {
+    const deals = await DealModel.findByContactId(contactId, userId)
 
     return {
       success: true,
@@ -56,8 +56,8 @@ export class DealService {
     }
   }
 
-  async getDealsByCompany(companyId: string): Promise<ApiResponse<Deal[]>> {
-    const deals = await DealModel.findByCompanyId(companyId)
+  async getDealsByCompany(companyId: string, userId: string): Promise<ApiResponse<Deal[]>> {
+    const deals = await DealModel.findByCompanyId(companyId, userId)
 
     return {
       success: true,
@@ -82,8 +82,8 @@ export class DealService {
     }
   }
 
-  async updateDeal(id: string, data: Partial<Omit<Deal, 'id' | 'createdAt'>>): Promise<ApiResponse<Deal>> {
-    const deal = await DealModel.update(id, data)
+  async updateDeal(id: string, userId: string, data: Partial<Omit<Deal, 'id' | 'createdAt'>>): Promise<ApiResponse<Deal>> {
+    const deal = await DealModel.update(id, userId, data)
 
     if (!deal) {
       return {
@@ -99,8 +99,8 @@ export class DealService {
     }
   }
 
-  async deleteDeal(id: string): Promise<ApiResponse<void>> {
-    const deleted = await DealModel.delete(id)
+  async deleteDeal(id: string, userId: string): Promise<ApiResponse<void>> {
+    const deleted = await DealModel.delete(id, userId)
 
     if (!deleted) {
       return {
@@ -115,21 +115,21 @@ export class DealService {
     }
   }
 
-  async getDealStats(): Promise<ApiResponse<{
+  async getDealStats(userId: string): Promise<ApiResponse<{
     totalValue: number
     totalDeals: number
     valueByStage: Record<DealStage, number>
   }>> {
-    const allDeals = await DealModel.findAll()
-    const totalValue = await DealModel.getTotalValue()
+    const allDeals = await DealModel.findAll(userId)
+    const totalValue = await DealModel.getTotalValue(userId)
 
     const valueByStage: Record<DealStage, number> = {
-      [DealStage.LEAD]: await DealModel.getTotalValueByStage(DealStage.LEAD),
-      [DealStage.QUALIFIED]: await DealModel.getTotalValueByStage(DealStage.QUALIFIED),
-      [DealStage.PROPOSAL]: await DealModel.getTotalValueByStage(DealStage.PROPOSAL),
-      [DealStage.NEGOTIATION]: await DealModel.getTotalValueByStage(DealStage.NEGOTIATION),
-      [DealStage.CLOSED_WON]: await DealModel.getTotalValueByStage(DealStage.CLOSED_WON),
-      [DealStage.CLOSED_LOST]: await DealModel.getTotalValueByStage(DealStage.CLOSED_LOST),
+      [DealStage.LEAD]: await DealModel.getTotalValueByStage(DealStage.LEAD, userId),
+      [DealStage.QUALIFIED]: await DealModel.getTotalValueByStage(DealStage.QUALIFIED, userId),
+      [DealStage.PROPOSAL]: await DealModel.getTotalValueByStage(DealStage.PROPOSAL, userId),
+      [DealStage.NEGOTIATION]: await DealModel.getTotalValueByStage(DealStage.NEGOTIATION, userId),
+      [DealStage.CLOSED_WON]: await DealModel.getTotalValueByStage(DealStage.CLOSED_WON, userId),
+      [DealStage.CLOSED_LOST]: await DealModel.getTotalValueByStage(DealStage.CLOSED_LOST, userId),
     }
 
     return {

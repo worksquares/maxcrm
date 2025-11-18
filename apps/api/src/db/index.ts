@@ -7,6 +7,11 @@ import { dirname } from 'path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
+// Validate required environment variables
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable must be set')
+}
+
 // PostgreSQL connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -66,9 +71,9 @@ export const initializeDatabase = async (): Promise<void> => {
 }
 
 // Query helper with automatic connection management
-export const query = async <T = any>(
+export const query = async <T>(
   text: string,
-  params?: any[]
+  params?: (string | number | boolean | Date | null)[]
 ): Promise<T[]> => {
   const client = await pool.connect()
   try {
