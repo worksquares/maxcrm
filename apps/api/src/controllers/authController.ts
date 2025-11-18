@@ -19,9 +19,6 @@ const loginSchema = z.object({
   password: z.string().min(1),
 })
 
-// In-memory password storage (in production, store hashed passwords in database)
-const passwordStore = new Map<string, string>()
-
 export class AuthController {
   async register(req: Request, res: Response) {
     try {
@@ -39,16 +36,13 @@ export class AuthController {
       // Hash password
       const hashedPassword = await bcrypt.hash(validatedData.password, 10)
 
-      // Create user
+      // Create user (password is now stored in database)
       const user = await UserModel.create({
         email: validatedData.email,
         firstName: validatedData.firstName,
         lastName: validatedData.lastName,
         role: validatedData.role || UserRole.USER,
-      })
-
-      // Store password (in production, this would be in the database)
-      passwordStore.set(user.id, hashedPassword)
+      }, hashedPassword)
 
       // Generate token
       const token = generateToken(user)
@@ -87,9 +81,9 @@ export class AuthController {
     try {
       const validatedData = loginSchema.parse(req.body)
 
-      // Find user
-      const user = await UserModel.findByEmail(validatedData.email)
-      if (!user) {
+      // Find user with password hash
+      const userWithPassword = await UserModel.findByEmailWithPassword(validatedData.email)
+      if (!userWithPassword) {
         return res.status(401).json({
           success: false,
           error: 'Invalid credentials',
@@ -97,25 +91,16 @@ export class AuthController {
       }
 
       // Verify password
-      const hashedPassword = passwordStore.get(user.id)
-      if (!hashedPassword) {
-        // For demo purposes, allow login without password for existing users
-        // In production, this should always be checked
-        if (user.email !== 'admin@maxcrm.example.com') {
-          return res.status(401).json({
-            success: false,
-            error: 'Invalid credentials',
-          })
-        }
-      } else {
-        const isPasswordValid = await bcrypt.compare(validatedData.password, hashedPassword)
-        if (!isPasswordValid) {
-          return res.status(401).json({
-            success: false,
-            error: 'Invalid credentials',
-          })
-        }
+      const isPasswordValid = await bcrypt.compare(validatedData.password, userWithPassword.passwordHash)
+      if (!isPasswordValid) {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid credentials',
+        })
       }
+
+      // Extract user without password hash
+      const { passwordHash, ...user } = userWithPassword
 
       // Generate token
       const token = generateToken(user)

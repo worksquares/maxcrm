@@ -1,121 +1,107 @@
-import { Contact, Company, Deal, User } from '@maxcrm/shared'
+import { Pool, PoolClient } from 'pg'
+import { readFileSync } from 'fs'
+import { join } from 'path'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
 
-// In-memory database storage
-// In production, replace this with a real database (PostgreSQL, MongoDB, etc.)
-interface Database {
-  contacts: Map<string, Contact>
-  companies: Map<string, Company>
-  deals: Map<string, Deal>
-  users: Map<string, User>
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+// PostgreSQL connection pool
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 20, // Maximum number of clients in the pool
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+})
+
+// Handle pool errors
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err)
+  process.exit(-1)
+})
+
+// Test database connection
+export const testConnection = async (): Promise<boolean> => {
+  try {
+    const client = await pool.connect()
+    await client.query('SELECT NOW()')
+    client.release()
+    console.log('✓ Database connection successful')
+    return true
+  } catch (error) {
+    console.error('✗ Database connection failed:', error)
+    return false
+  }
 }
 
-const db: Database = {
-  contacts: new Map(),
-  companies: new Map(),
-  deals: new Map(),
-  users: new Map(),
+// Initialize database schema
+export const initializeDatabase = async (): Promise<void> => {
+  try {
+    const client = await pool.connect()
+
+    // Read and execute schema
+    const schemaSQL = readFileSync(join(__dirname, 'schema.sql'), 'utf-8')
+    await client.query(schemaSQL)
+    console.log('✓ Database schema initialized')
+
+    // Check if we need to seed data
+    const result = await client.query('SELECT COUNT(*) FROM users')
+    const userCount = parseInt(result.rows[0].count, 10)
+
+    if (userCount === 0) {
+      // Read and execute seed data
+      const seedSQL = readFileSync(join(__dirname, 'seed.sql'), 'utf-8')
+      await client.query(seedSQL)
+      console.log('✓ Database seeded with sample data')
+    } else {
+      console.log('✓ Database already contains data, skipping seed')
+    }
+
+    client.release()
+  } catch (error) {
+    console.error('✗ Database initialization failed:', error)
+    throw error
+  }
 }
 
-// Helper function to generate unique IDs
-export const generateId = (): string => {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+// Query helper with automatic connection management
+export const query = async <T = any>(
+  text: string,
+  params?: any[]
+): Promise<T[]> => {
+  const client = await pool.connect()
+  try {
+    const result = await client.query(text, params)
+    return result.rows
+  } finally {
+    client.release()
+  }
 }
 
-// Initialize with some sample data
-const initializeData = () => {
-  // Sample companies
-  const company1: Company = {
-    id: generateId(),
-    name: 'Acme Corporation',
-    website: 'https://acme.example.com',
-    industry: 'Technology',
-    size: '51-200',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+// Transaction helper
+export const transaction = async <T>(
+  callback: (client: PoolClient) => Promise<T>
+): Promise<T> => {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    const result = await callback(client)
+    await client.query('COMMIT')
+    return result
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
   }
-
-  const company2: Company = {
-    id: generateId(),
-    name: 'Global Industries',
-    website: 'https://global.example.com',
-    industry: 'Manufacturing',
-    size: '201+',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
-
-  db.companies.set(company1.id, company1)
-  db.companies.set(company2.id, company2)
-
-  // Sample contacts
-  const contact1: Contact = {
-    id: generateId(),
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@acme.example.com',
-    phone: '+1-555-0101',
-    companyId: company1.id,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
-
-  const contact2: Contact = {
-    id: generateId(),
-    firstName: 'Jane',
-    lastName: 'Smith',
-    email: 'jane.smith@global.example.com',
-    phone: '+1-555-0102',
-    companyId: company2.id,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
-
-  db.contacts.set(contact1.id, contact1)
-  db.contacts.set(contact2.id, contact2)
-
-  // Sample deals
-  const deal1: Deal = {
-    id: generateId(),
-    title: 'Enterprise Software License',
-    value: 50000,
-    stage: 'proposal' as any,
-    contactId: contact1.id,
-    companyId: company1.id,
-    expectedCloseDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
-
-  const deal2: Deal = {
-    id: generateId(),
-    title: 'Consulting Services',
-    value: 25000,
-    stage: 'negotiation' as any,
-    contactId: contact2.id,
-    companyId: company2.id,
-    expectedCloseDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days from now
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
-
-  db.deals.set(deal1.id, deal1)
-  db.deals.set(deal2.id, deal2)
-
-  // Sample user (for authentication)
-  const user1: User = {
-    id: generateId(),
-    email: 'admin@maxcrm.example.com',
-    firstName: 'Admin',
-    lastName: 'User',
-    role: 'admin' as any,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
-
-  db.users.set(user1.id, user1)
 }
 
-// Initialize data on startup
-initializeData()
+// Close pool on application shutdown
+export const closePool = async (): Promise<void> => {
+  await pool.end()
+  console.log('✓ Database pool closed')
+}
 
-export default db
+export default pool
+
