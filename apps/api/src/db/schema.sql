@@ -29,13 +29,15 @@ CREATE TABLE companies (
   website VARCHAR(255),
   industry VARCHAR(100),
   size VARCHAR(50),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create index on name for search
+-- Create indexes for companies
 CREATE INDEX idx_companies_name ON companies(name);
 CREATE INDEX idx_companies_industry ON companies(industry);
+CREATE INDEX idx_companies_user_id ON companies(user_id);
 
 -- Contacts table
 CREATE TABLE contacts (
@@ -45,6 +47,7 @@ CREATE TABLE contacts (
   email VARCHAR(255) NOT NULL,
   phone VARCHAR(50),
   company_id UUID REFERENCES companies(id) ON DELETE SET NULL,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -53,6 +56,7 @@ CREATE TABLE contacts (
 CREATE INDEX idx_contacts_email ON contacts(email);
 CREATE INDEX idx_contacts_company_id ON contacts(company_id);
 CREATE INDEX idx_contacts_name ON contacts(first_name, last_name);
+CREATE INDEX idx_contacts_user_id ON contacts(user_id);
 
 -- Deals table
 CREATE TABLE deals (
@@ -62,6 +66,7 @@ CREATE TABLE deals (
   stage VARCHAR(50) NOT NULL DEFAULT 'lead',
   contact_id UUID REFERENCES contacts(id) ON DELETE SET NULL,
   company_id UUID REFERENCES companies(id) ON DELETE SET NULL,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   expected_close_date TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -75,6 +80,7 @@ CREATE INDEX idx_deals_stage ON deals(stage);
 CREATE INDEX idx_deals_contact_id ON deals(contact_id);
 CREATE INDEX idx_deals_company_id ON deals(company_id);
 CREATE INDEX idx_deals_expected_close_date ON deals(expected_close_date);
+CREATE INDEX idx_deals_user_id ON deals(user_id);
 
 -- Create a function to update the updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()

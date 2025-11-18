@@ -170,6 +170,22 @@ export class AuthController {
       })
     }
   }
+
+  async logout(_req: Request, res: Response) {
+    try {
+      // Since we're using stateless JWT tokens, logout is handled client-side
+      // by removing the token from storage. This endpoint confirms the logout action.
+      res.json({
+        success: true,
+        message: 'Logged out successfully',
+      })
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Internal server error',
+      })
+    }
+  }
 }
 
 export default new AuthController()

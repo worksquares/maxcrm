@@ -2,8 +2,8 @@ import { Company, ApiResponse, PaginatedResponse, DEFAULT_PAGE_SIZE } from '@max
 import { CompanyModel } from '../models/Company'
 
 export class CompanyService {
-  async getAllCompanies(page = 1, limit = DEFAULT_PAGE_SIZE): Promise<PaginatedResponse<Company>> {
-    const allCompanies = await CompanyModel.findAll()
+  async getAllCompanies(userId: string, page = 1, limit = DEFAULT_PAGE_SIZE): Promise<PaginatedResponse<Company>> {
+    const allCompanies = await CompanyModel.findAll(userId)
     const total = allCompanies.length
     const totalPages = Math.ceil(total / limit)
     const startIndex = (page - 1) * limit
@@ -22,8 +22,8 @@ export class CompanyService {
     }
   }
 
-  async getCompanyById(id: string): Promise<ApiResponse<Company>> {
-    const company = await CompanyModel.findById(id)
+  async getCompanyById(id: string, userId: string): Promise<ApiResponse<Company>> {
+    const company = await CompanyModel.findById(id, userId)
 
     if (!company) {
       return {
@@ -55,8 +55,8 @@ export class CompanyService {
     }
   }
 
-  async updateCompany(id: string, data: Partial<Omit<Company, 'id' | 'createdAt'>>): Promise<ApiResponse<Company>> {
-    const company = await CompanyModel.update(id, data)
+  async updateCompany(id: string, userId: string, data: Partial<Omit<Company, 'id' | 'createdAt'>>): Promise<ApiResponse<Company>> {
+    const company = await CompanyModel.update(id, userId, data)
 
     if (!company) {
       return {
@@ -72,8 +72,8 @@ export class CompanyService {
     }
   }
 
-  async deleteCompany(id: string): Promise<ApiResponse<void>> {
-    const deleted = await CompanyModel.delete(id)
+  async deleteCompany(id: string, userId: string): Promise<ApiResponse<void>> {
+    const deleted = await CompanyModel.delete(id, userId)
 
     if (!deleted) {
       return {
@@ -88,8 +88,8 @@ export class CompanyService {
     }
   }
 
-  async searchCompanies(query: string): Promise<ApiResponse<Company[]>> {
-    const companies = await CompanyModel.search(query)
+  async searchCompanies(query: string, userId: string): Promise<ApiResponse<Company[]>> {
+    const companies = await CompanyModel.search(query, userId)
 
     return {
       success: true,

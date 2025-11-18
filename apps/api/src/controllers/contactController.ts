@@ -22,61 +22,83 @@ const updateContactSchema = z.object({
 export class ContactController {
   async getAllContacts(req: Request, res: Response) {
     try {
+      const userId = req.user!.id
       const page = parseInt(req.query.page as string) || 1
       const limit = parseInt(req.query.limit as string) || 20
 
-      const result = await contactService.getAllContacts(page, limit)
+      const result = await contactService.getAllContacts(userId, page, limit)
       res.json(result)
-    } catch (error) {
-      res.status(500).json({
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }
 
   async getContactById(req: Request, res: Response) {
     try {
+      const userId = req.user!.id
       const { id } = req.params
-      const result = await contactService.getContactById(id)
+      const result = await contactService.getContactById(id, userId)
 
       if (!result.success) {
         return res.status(404).json(result)
       }
 
       res.json(result)
-    } catch (error) {
-      res.status(500).json({
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }
 
   async getContactsByCompany(req: Request, res: Response) {
     try {
+      const userId = req.user!.id
       const { companyId } = req.params
-      const result = await contactService.getContactsByCompany(companyId)
+      const result = await contactService.getContactsByCompany(companyId, userId)
       res.json(result)
-    } catch (error) {
-      res.status(500).json({
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }
 
   async createContact(req: Request, res: Response) {
     try {
+      const userId = req.user!.id
       const validatedData = createContactSchema.parse(req.body)
-      const result = await contactService.createContact(validatedData)
+      const result = await contactService.createContact({ ...validatedData, userId })
 
       if (!result.success) {
         return res.status(400).json(result)
       }
 
       res.status(201).json(result)
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           success: false,
@@ -85,25 +107,33 @@ export class ContactController {
         })
       }
 
-      res.status(500).json({
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }
 
   async updateContact(req: Request, res: Response) {
     try {
+      const userId = req.user!.id
       const { id } = req.params
       const validatedData = updateContactSchema.parse(req.body)
-      const result = await contactService.updateContact(id, validatedData)
+      const result = await contactService.updateContact(id, userId, validatedData)
 
       if (!result.success) {
         return res.status(404).json(result)
       }
 
       res.json(result)
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           success: false,
@@ -112,33 +142,48 @@ export class ContactController {
         })
       }
 
-      res.status(500).json({
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }
 
   async deleteContact(req: Request, res: Response) {
     try {
+      const userId = req.user!.id
       const { id } = req.params
-      const result = await contactService.deleteContact(id)
+      const result = await contactService.deleteContact(id, userId)
 
       if (!result.success) {
         return res.status(404).json(result)
       }
 
       res.json(result)
-    } catch (error) {
-      res.status(500).json({
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }
 
   async searchContacts(req: Request, res: Response) {
     try {
+      const userId = req.user!.id
       const query = req.query.q as string
 
       if (!query) {
@@ -148,12 +193,18 @@ export class ContactController {
         })
       }
 
-      const result = await contactService.searchContacts(query)
+      const result = await contactService.searchContacts(query, userId)
       res.json(result)
-    } catch (error) {
-      res.status(500).json({
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        })
+      }
+      return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Unknown error occurred',
       })
     }
   }

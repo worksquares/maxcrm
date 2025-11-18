@@ -2,8 +2,8 @@ import { Contact, ApiResponse, PaginatedResponse, DEFAULT_PAGE_SIZE } from '@max
 import { ContactModel } from '../models/Contact'
 
 export class ContactService {
-  async getAllContacts(page = 1, limit = DEFAULT_PAGE_SIZE): Promise<PaginatedResponse<Contact>> {
-    const allContacts = await ContactModel.findAll()
+  async getAllContacts(userId: string, page = 1, limit = DEFAULT_PAGE_SIZE): Promise<PaginatedResponse<Contact>> {
+    const allContacts = await ContactModel.findAll(userId)
     const total = allContacts.length
     const totalPages = Math.ceil(total / limit)
     const startIndex = (page - 1) * limit
@@ -22,8 +22,8 @@ export class ContactService {
     }
   }
 
-  async getContactById(id: string): Promise<ApiResponse<Contact>> {
-    const contact = await ContactModel.findById(id)
+  async getContactById(id: string, userId: string): Promise<ApiResponse<Contact>> {
+    const contact = await ContactModel.findById(id, userId)
 
     if (!contact) {
       return {
@@ -38,8 +38,8 @@ export class ContactService {
     }
   }
 
-  async getContactsByCompany(companyId: string): Promise<ApiResponse<Contact[]>> {
-    const contacts = await ContactModel.findByCompanyId(companyId)
+  async getContactsByCompany(companyId: string, userId: string): Promise<ApiResponse<Contact[]>> {
+    const contacts = await ContactModel.findByCompanyId(companyId, userId)
 
     return {
       success: true,
@@ -64,8 +64,8 @@ export class ContactService {
     }
   }
 
-  async updateContact(id: string, data: Partial<Omit<Contact, 'id' | 'createdAt'>>): Promise<ApiResponse<Contact>> {
-    const contact = await ContactModel.update(id, data)
+  async updateContact(id: string, userId: string, data: Partial<Omit<Contact, 'id' | 'createdAt'>>): Promise<ApiResponse<Contact>> {
+    const contact = await ContactModel.update(id, userId, data)
 
     if (!contact) {
       return {
@@ -81,8 +81,8 @@ export class ContactService {
     }
   }
 
-  async deleteContact(id: string): Promise<ApiResponse<void>> {
-    const deleted = await ContactModel.delete(id)
+  async deleteContact(id: string, userId: string): Promise<ApiResponse<void>> {
+    const deleted = await ContactModel.delete(id, userId)
 
     if (!deleted) {
       return {
@@ -97,8 +97,8 @@ export class ContactService {
     }
   }
 
-  async searchContacts(query: string): Promise<ApiResponse<Contact[]>> {
-    const contacts = await ContactModel.search(query)
+  async searchContacts(query: string, userId: string): Promise<ApiResponse<Contact[]>> {
+    const contacts = await ContactModel.search(query, userId)
 
     return {
       success: true,
